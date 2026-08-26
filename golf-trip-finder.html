@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Golf Trip Finder</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Source+Serif+4:wght@400;500&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #FAF7EF; color: #232620; font-family: 'Source Serif 4', Georgia, serif; }
+  .font-display { font-family: 'Fraunces', serif; }
+  .font-mono { font-family: 'IBM Plex Mono', monospace; }
+
+  .hero { background: #2F5233; color: #FAF7EF; padding: 40px 20px; position: relative; overflow: hidden; }
+  .hero-eyebrow { color: #C7D6B8; margin-bottom: 14px; font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+  .hero h1 { font-weight: 600; font-size: 30px; line-height: 1.1; max-width: 480px; }
+  .hero p { margin-top: 14px; color: #DCE6D1; font-size: 15px; max-width: 420px; line-height: 1.5; }
+  .hero-flag { position: absolute; right: -30px; bottom: -50px; opacity: 0.08; font-size: 220px; }
+
+  .layout { max-width: 900px; margin: 0 auto; padding: 20px; display: grid; gap: 20px; }
+  @media (min-width: 768px) { .layout { grid-template-columns: 260px 1fr; align-items: start; } }
+
+  .filters { background: white; border: 1px solid #E4DCC8; border-radius: 10px; padding: 18px; }
+  @media (min-width: 768px) { .filters { position: sticky; top: 16px; } }
+  .filters-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .filters-top h2 { font-weight: 600; font-size: 17px; }
+  .clear-btn { font-size: 11px; color: #8A7F63; background: none; border: none; cursor: pointer; font-family: inherit; }
+  .clear-btn:hover { color: #C1440E; }
+
+  .filter-group { margin-bottom: 20px; }
+  .filter-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #6B7A5F; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+
+  select.region-select { width: 100%; background: #FAF7EF; border: 1px solid #DCD3BC; border-radius: 6px; padding: 8px 10px; font-size: 14px; font-family: inherit; }
+
+  .btn-stack { display: flex; flex-direction: column; gap: 6px; }
+  .opt-btn { text-align: left; font-size: 14px; padding: 6px 10px; border-radius: 6px; border: 1px solid #DCD3BC; background: #FAF7EF; cursor: pointer; font-family: inherit; }
+  .opt-btn.active { background: #2F5233; color: white; border-color: #2F5233; }
+
+  .pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid #DCD3BC; background: #FAF7EF; cursor: pointer; font-family: inherit; }
+  .pill.active { background: #3A4A34; color: white; border-color: #3A4A34; }
+
+  .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 8px; cursor: pointer; }
+  .checkbox-row input { width: 16px; height: 16px; accent-color: #2F5233; }
+
+  input[type="range"] { width: 100%; accent-color: #2F5233; }
+  .range-labels { display: flex; justify-content: space-between; font-size: 11px; color: #8A7F63; margin-top: 4px; }
+
+  .results-count { font-size: 13px; color: #6B7A5F; margin-bottom: 12px; }
+  .cards-grid { display: grid; gap: 14px; }
+  @media (min-width: 640px) { .cards-grid { grid-template-columns: 1fr 1fr; } }
+
+  .card { background: white; border: 1px solid #E4DCC8; border-radius: 10px; padding: 16px; cursor: pointer; text-align: left; transition: border-color 0.15s; }
+  .card:hover { border-color: #2F5233; }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .card h3 { font-weight: 600; font-size: 17px; line-height: 1.2; }
+  .price-dots { display: flex; gap: 2px; flex-shrink: 0; margin-top: 3px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #D8D2C4; }
+  .dot.filled { background: #C1440E; }
+  .card-region { font-size: 11px; color: #8A7F63; margin-top: 3px; }
+  .card-blurb { font-size: 14px; color: #4A4A42; margin-top: 10px; line-height: 1.4; }
+  .card-courses { font-size: 12px; color: #3A4A34; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E4DCC8; }
+  .card-courses-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+  .card-courses-label { display: flex; align-items: center; gap: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; font-size: 10px; color: #6B7A5F; }
+  .course-time-badge { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 2px 7px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
+  .course-time-badge.onsite { background: #2F5233; color: white; }
+  .course-time-badge.nearby { background: #EFE9DA; color: #3A4A34; border: 1px solid #DCD3BC; }
+  .card-courses-names { color: #4A4A42; line-height: 1.4; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
+  .tag { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; padding: 3px 8px; border-radius: 999px; background: #EFE9DA; color: #3A4A34; border: 1px solid #DCD3BC; }
+
+  .no-results { border: 1px dashed #DCD3BC; border-radius: 10px; padding: 40px 20px; text-align: center; color: #8A7F63; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 50; align-items: center; justify-content: center; padding: 0; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #FAF7EF; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; border-radius: 0; }
+  @media (min-width: 640px) { .modal { border-radius: 10px; } }
+  .modal-header { background: #2F5233; color: #FAF7EF; padding: 18px 20px; display: flex; justify-content: space-between; align-items: flex-start; }
+  .modal-header .region-tag { color: #C7D6B8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .modal-header h2 { font-weight: 600; font-size: 22px; margin-top: 4px; }
+  .modal-close { background: none; border: none; color: #DCE6D1; font-size: 22px; cursor: pointer; line-height: 1; }
+  .modal-body { padding: 18px 20px; }
+  .modal-blurb { color: #4A4A42; line-height: 1.5; margin-bottom: 16px; }
+  .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; border-top: 1px solid #E4DCC8; padding-top: 14px; }
+  .modal-field dt { font-size: 10px; text-transform: uppercase; color: #8A7F63; margin-bottom: 3px; }
+  .modal-field dd { font-size: 14px; }
+  .modal-cta { display: block; width: 100%; margin-top: 16px; background: #C1440E; color: white; border: none; border-radius: 6px; padding: 13px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; text-align: center; text-decoration: none; box-sizing: border-box; }
+  .modal-note { font-size: 11px; color: #8A7F63; text-align: center; margin-top: 8px; }
+
+  .meal-note { font-size: 10px; color: #8A7F63; margin-top: 6px; line-height: 1.4; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-eyebrow">🚩 Golf Trip Finder · UK, Ireland &amp; Europe</div>
+  <h1>Find the golf trip that fits your round, not just your dates.</h1>
+  <p>Filter by what actually matters on a golf trip — course, pool, distance to town, nightlife — not generic hotel checkboxes.</p>
+  <div class="hero-flag">🚩</div>
+</div>
+
+<div class="layout">
+  <div class="filters">
+    <div class="filters-top">
+      <h2>Filters</h2>
+      <button class="clear-btn" id="clearBtn" onclick="clearFilters()">Clear</button>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-label">Country</div>
+      <select class="region-select" id="countrySelect" onchange="onCountryChange()"></select>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-label">Region</div>
+      <select class="region-select" id="regionSelect" onchange="applyFilters()"></select>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-label">Golf</div>
+      <div class="btn-stack" id="golfTypeGroup">
+        <button class="opt-btn active" data-val="any" onclick="setGolfType('any')">Any</button>
+        <button class="opt-btn" data-val="onsite" onclick="setGolfType('onsite')">On-site course</button>
+        <button class="opt-btn" data-val="nearby" onclick="setGolfType('nearby')">Nearby courses</button>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-label">🏠 Accommodation</div>
+      <div class="pill-row" id="accomGroup"></div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-label">🍽️ Meal plan</div>
+      <div class="pill-row" id="mealGroup"></div>
+    </div>
+
+    <div class="filter-group">
+      <label class="checkbox-row"><input type="checkbox" id="coastalCheck" onchange="applyFilters()"> 🌊 Coastal / beach nearby</label>
+      <label class="checkbox-row"><input type="checkbox" id="poolCheck" onchange="applyFilters()"> ⭕ Pool on-site</label>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-label">Nightlife style</div>
+      <div class="pill-row" id="nightlifeGroup"></div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-label">🌙 Max distance to nightlife</div>
+      <input type="range" id="nightlifeRange" min="5" max="20" step="5" value="20" oninput="applyFilters()">
+      <div class="range-labels"><span>5 min</span><span id="nightlifeRangeLabel">20+ min</span></div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-label">✈️ Max airport transfer</div>
+      <input type="range" id="transferRange" min="15" max="120" step="5" value="120" oninput="applyFilters()">
+      <div class="range-labels"><span>15 min</span><span id="transferRangeLabel">120+ min</span></div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-label">🚩 Max time to golf course</div>
+      <input type="range" id="courseDistRange" min="0" max="45" step="5" value="45" oninput="applyFilters()">
+      <div class="range-labels"><span>On-site</span><span id="courseDistRangeLabel">45+ min</span></div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-label">Max price band</div>
+      <input type="range" id="priceRange" min="1" max="5" value="5" oninput="applyFilters()">
+      <div class="range-labels"><span>£</span><span>£££££</span></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="results-count" id="resultsCount"></div>
+    <div class="cards-grid" id="cardsGrid"></div>
+    <div class="no-results" id="noResults" style="display:none;">Nothing matches yet — try loosening a filter.</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <div class="region-tag" id="modalRegion"></div>
+        <h2 id="modalName"></h2>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-blurb" id="modalBlurb"></p>
+      <dl class="modal-grid" id="modalGrid"></dl>
+      <a class="modal-cta" id="modalCta" href="#" target="_blank" rel="noopener">Check on Booking.com →</a>
+      <p class="modal-note">Generic search link for now — will switch to a tracked affiliate link once Booking.com/Golfbreaks partnerships are approved.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+
+const SUPABASE_URL = "https://rvyatdhhwgwdzeyvegyu.supabase.co";
+const SUPABASE_KEY = "sb_publishable_IWiIh5AfWvtp_Av73eyPAQ_LMZ6_zTy";
+
+let RESORTS = [];
+
+async function fetchResorts() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/resorts?select=*&order=name.asc`, {
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`
+    }
+  });
+  if (!res.ok) throw new Error("Failed to load resorts: " + res.status);
+  const rows = await res.json();
+  return rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    country: r.country,
+    region: r.region,
+    town: r.town,
+    coastal: r.coastal,
+    onSiteGolf: r.on_site_golf,
+    courses: r.courses,
+    courseDistanceMinutes: r.course_distance_minutes,
+    pool: r.pool,
+    nightlife: r.nightlife,
+    nightlifeMinutes: r.nightlife_minutes,
+    accomTypes: r.accom_types || [],
+    mealPlan: r.meal_plan,
+    priceBand: r.price_band,
+    greenFee: r.green_fee,
+    roomRate: r.room_rate,
+    bestMonths: r.best_months,
+    transfer: r.transfer,
+    transferMinutes: r.transfer_minutes,
+    blurb: r.blurb
+  }));
+}
+
+let state = {
+  region: "All regions",
+  country: "All countries",
+  golfType: "any",
+  coastalOnly: false,
+  poolOnly: false,
+  nightlife: [],
+  maxNightlifeDist: 20,
+  maxTransfer: 120,
+  maxCourseDist: 45,
+  maxPrice: 5,
+  accomTypes: [],
+  mealPlans: []
+};
+
+const ACCOM_TYPES = ["Hotel", "Villa", "Apartment"];
+const NIGHTLIFE_OPTIONS = ["quiet", "moderate", "lively"];
+const MEAL_PLAN_OPTIONS = ["All-Inclusive", "Half Board", "B&B", "Self-catering"];
+
+async function init() {
+  const grid = document.getElementById("cardsGrid");
+  const noResults = document.getElementById("noResults");
+  document.getElementById("resultsCount").textContent = "Loading listings…";
+  grid.innerHTML = "";
+  noResults.style.display = "none";
+
+  try {
+    RESORTS = await fetchResorts();
+  } catch (err) {
+    document.getElementById("resultsCount").textContent = "";
+    noResults.style.display = "block";
+    noResults.textContent = "Couldn't load listings right now — please refresh the page.";
+    console.error(err);
+    return;
+  }
+
+  const regions = ["All regions", ...new Set(RESORTS.map(r => r.region))];
+  const regionSelect = document.getElementById("regionSelect");
+  regions.forEach(r => {
+    const opt = document.createElement("option");
+    opt.value = r; opt.textContent = r;
+    regionSelect.appendChild(opt);
+  });
+
+  const countries = [...new Set(RESORTS.map(r => r.country))].sort();
+  const countrySelect = document.getElementById("countrySelect");
+  countrySelect.innerHTML = "";
+  const allOpt = document.createElement("option");
+  allOpt.value = "All countries"; allOpt.textContent = "All countries";
+  countrySelect.appendChild(allOpt);
+  countries.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c; opt.textContent = c;
+    countrySelect.appendChild(opt);
+  });
+
+  const accomGroup = document.getElementById("accomGroup");
+  ACCOM_TYPES.forEach(t => {
+    const btn = document.createElement("button");
+    btn.className = "pill"; btn.textContent = t; btn.dataset.val = t;
+    btn.onclick = () => togglePill("accomTypes", t, btn);
+    accomGroup.appendChild(btn);
+  });
+
+  const mealGroup = document.getElementById("mealGroup");
+  MEAL_PLAN_OPTIONS.forEach(t => {
+    const btn = document.createElement("button");
+    btn.className = "pill"; btn.textContent = t; btn.dataset.val = t;
+    btn.onclick = () => togglePill("mealPlans", t, btn);
+    mealGroup.appendChild(btn);
+  });
+
+  const nightlifeGroup = document.getElementById("nightlifeGroup");
+  NIGHTLIFE_OPTIONS.forEach(t => {
+    const btn = document.createElement("button");
+    btn.className = "pill"; btn.textContent = t.charAt(0).toUpperCase() + t.slice(1); btn.dataset.val = t;
+    btn.onclick = () => togglePill("nightlife", t, btn);
+    nightlifeGroup.appendChild(btn);
+  });
+
+  applyFilters();
+}
+
+function onCountryChange() {
+  const country = document.getElementById("countrySelect").value;
+  const regionSelect = document.getElementById("regionSelect");
+  const relevantResorts = country === "All countries" ? RESORTS : RESORTS.filter(r => r.country === country);
+  const regions = ["All regions", ...new Set(relevantResorts.map(r => r.region))];
+  regionSelect.innerHTML = "";
+  regions.forEach(r => {
+    const opt = document.createElement("option");
+    opt.value = r; opt.textContent = r;
+    regionSelect.appendChild(opt);
+  });
+  applyFilters();
+}
+
+function togglePill(key, val, btn) {
+  const idx = state[key].indexOf(val);
+  if (idx > -1) { state[key].splice(idx, 1); btn.classList.remove("active"); }
+  else { state[key].push(val); btn.classList.add("active"); }
+  applyFilters();
+}
+
+function setGolfType(val) {
+  state.golfType = val;
+  document.querySelectorAll("#golfTypeGroup .opt-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.val === val);
+  });
+  applyFilters();
+}
+
+function matchesMealPlan(r, selected) {
+  if (selected.length === 0) return true;
+  if (!r.mealPlan) return false;
+  const mp = r.mealPlan.toLowerCase();
+  return selected.some(sel => mp.includes(sel.toLowerCase()));
+}
+
+function applyFilters() {
+  state.country = document.getElementById("countrySelect").value || "All countries";
+  state.region = document.getElementById("regionSelect").value || "All regions";
+  state.coastalOnly = document.getElementById("coastalCheck").checked;
+  state.poolOnly = document.getElementById("poolCheck").checked;
+  state.maxNightlifeDist = parseInt(document.getElementById("nightlifeRange").value);
+  state.maxTransfer = parseInt(document.getElementById("transferRange").value);
+  state.maxCourseDist = parseInt(document.getElementById("courseDistRange").value);
+  state.maxPrice = parseInt(document.getElementById("priceRange").value);
+
+  document.getElementById("nightlifeRangeLabel").textContent = state.maxNightlifeDist >= 20 ? "20+ min" : state.maxNightlifeDist + " min";
+  document.getElementById("transferRangeLabel").textContent = state.maxTransfer >= 120 ? "120+ min" : state.maxTransfer + " min";
+  document.getElementById("courseDistRangeLabel").textContent = state.maxCourseDist >= 45 ? "45+ min" : (state.maxCourseDist === 0 ? "On-site only" : state.maxCourseDist + " min");
+
+  const filtered = RESORTS.filter(r => {
+    if (state.country !== "All countries" && r.country !== state.country) return false;
+    if (state.region !== "All regions" && r.region !== state.region) return false;
+    if (state.golfType === "onsite" && !r.onSiteGolf) return false;
+    if (state.golfType === "nearby" && r.onSiteGolf) return false;
+    if (state.coastalOnly && !r.coastal) return false;
+    if (state.poolOnly && !r.pool) return false;
+    if (state.nightlife.length > 0 && !state.nightlife.includes(r.nightlife)) return false;
+    if (r.priceBand > state.maxPrice) return false;
+    if (r.transferMinutes > state.maxTransfer) return false;
+    if (r.nightlifeMinutes > state.maxNightlifeDist) return false;
+    if (r.courseDistanceMinutes > state.maxCourseDist) return false;
+    if (state.accomTypes.length > 0 && !r.accomTypes.some(t => state.accomTypes.includes(t))) return false;
+    if (!matchesMealPlan(r, state.mealPlans)) return false;
+    return true;
+  });
+
+  renderCards(filtered);
+}
+
+function renderCards(list) {
+  const grid = document.getElementById("cardsGrid");
+  const noResults = document.getElementById("noResults");
+  const count = document.getElementById("resultsCount");
+  count.textContent = list.length + " of " + RESORTS.length + " resorts";
+
+  if (list.length === 0) {
+    grid.style.display = "none";
+    noResults.style.display = "block";
+    return;
+  }
+  grid.style.display = "grid";
+  noResults.style.display = "none";
+
+  grid.innerHTML = list.map((r, i) => {
+    const dots = [1,2,3,4,5].map(n => `<span class="dot ${n <= r.priceBand ? 'filled' : ''}"></span>`).join("");
+    const tags = [];
+    tags.push(r.onSiteGolf ? '<span class="tag">On-site golf</span>' : '<span class="tag">Nearby golf</span>');
+    if (r.coastal) tags.push('<span class="tag">Coastal</span>');
+    if (r.pool) tags.push('<span class="tag">Pool</span>');
+    tags.push(`<span class="tag">${r.accomTypes.join(" / ")}</span>`);
+    return `
+      <div class="card" onclick="openModal('${r.id}')">
+        <div class="card-top"><h3>${r.name}</h3><div class="price-dots">${dots}</div></div>
+        <div class="card-region">📍 ${r.town}, ${r.region}</div>
+        <div class="card-blurb">${r.blurb}</div>
+        <div class="card-courses">
+          <div class="card-courses-top">
+            <span class="card-courses-label">🚩 Golf</span>
+            <span class="course-time-badge ${r.courseDistanceMinutes === 0 ? 'onsite' : 'nearby'}">${r.courseDistanceMinutes === 0 ? 'On-site' : r.courseDistanceMinutes + ' min away'}</span>
+          </div>
+          <div class="card-courses-names">${r.courses}</div>
+        </div>
+        <div class="tag-row">${tags.join("")}</div>
+      </div>`;
+  }).join("");
+}
+
+function clearFilters() {
+  state = { region: "All regions", country: "All countries", golfType: "any", coastalOnly: false, poolOnly: false, nightlife: [], maxNightlifeDist: 20, maxTransfer: 120, maxCourseDist: 45, maxPrice: 5, accomTypes: [], mealPlans: [] };
+  document.getElementById("countrySelect").value = "All countries";
+  onCountryChange();
+  document.getElementById("regionSelect").value = "All regions";
+  document.getElementById("coastalCheck").checked = false;
+  document.getElementById("poolCheck").checked = false;
+  document.getElementById("nightlifeRange").value = 20;
+  document.getElementById("transferRange").value = 120;
+  document.getElementById("courseDistRange").value = 45;
+  document.getElementById("priceRange").value = 5;
+  document.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll("#golfTypeGroup .opt-btn").forEach(b => b.classList.toggle("active", b.dataset.val === "any"));
+  applyFilters();
+}
+
+function openModal(id) {
+  const r = RESORTS.find(x => x.id === id);
+  const bookingUrl = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(r.name + " " + r.town)}`;
+  document.getElementById("modalRegion").textContent = r.region;
+  document.getElementById("modalName").textContent = r.name;
+  document.getElementById("modalBlurb").textContent = r.blurb;
+  document.getElementById("modalGrid").innerHTML = `
+    <div class="modal-field"><dt>Golf</dt><dd>${r.courses}</dd></div>
+    <div class="modal-field"><dt>Time to course</dt><dd>${r.courseDistanceMinutes === 0 ? "On-site" : r.courseDistanceMinutes + " min"}</dd></div>
+    <div class="modal-field"><dt>Accommodation</dt><dd>${r.accomTypes.join(", ")}</dd></div>
+    <div class="modal-field"><dt>Green fee</dt><dd class="font-mono">${r.greenFee}</dd></div>
+    <div class="modal-field"><dt>Room rate</dt><dd class="font-mono">${r.roomRate}</dd></div>
+    <div class="modal-field"><dt>Meal plan</dt><dd>${r.mealPlan || "Not yet recorded"}</dd></div>
+    <div class="modal-field"><dt>Best months</dt><dd>☀️ ${r.bestMonths}</dd></div>
+    <div class="modal-field"><dt>Nightlife</dt><dd>🌙 ${r.nightlife}, ~${r.nightlifeMinutes} min</dd></div>
+    <div class="modal-field"><dt>Transfer</dt><dd>${r.transfer}</dd></div>
+  `;
+  document.getElementById("modalCta").href = bookingUrl;
+  document.getElementById("modalOverlay").classList.add("open");
+}
+
+function closeModal(e) {
+  document.getElementById("modalOverlay").classList.remove("open");
+}
+
+init();
+</script>
+</body>
+</html>
